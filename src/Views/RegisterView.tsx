@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import type { RegisterForm } from "../types";
 import ErrorsMessages from "../components/ErrorsMessages";
+import axios, { isAxiosError } from "axios";
 
 export default function RegisterView() {
-  const initialValues = {
+  const initialValues: RegisterForm = {
     name: "",
     email: "",
     handle: "",
@@ -14,14 +16,26 @@ export default function RegisterView() {
     register,
     watch,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm({ defaultValues: initialValues });
 
-  const handleRegister = () => {
-    console.log("desde register");
-  };
+  const password = watch("password");
 
-  console.log(errors);
+  const handleRegister = async (formData: RegisterForm) => {
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/register`,
+        formData
+      );
+      console.log(data);
+      reset();
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        console.log(error.response.data.error);
+      }
+    }
+  };
 
   return (
     <>
@@ -54,7 +68,13 @@ export default function RegisterView() {
             type="email"
             placeholder="Email de Registro"
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
-            {...register("email", { required: "El correo es obligatorio" })}
+            {...register("email", {
+              required: "El correo es obligatorio",
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "E-mail no válido",
+              },
+            })}
           />
           {errors.email && (
             <ErrorsMessages>{errors.email.message}</ErrorsMessages>
@@ -86,6 +106,10 @@ export default function RegisterView() {
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
             {...register("password", {
               required: "La contraseña es obligatoria",
+              minLength: {
+                value: 8,
+                message: "La contraseña debe ser de mínimo 8 caracteres",
+              },
             })}
           />
           {errors.password && (
@@ -107,6 +131,8 @@ export default function RegisterView() {
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
             {...register("password_confirmation", {
               required: "Asegurate de repetir la contraseña",
+              validate: (value) =>
+                value === password || "Las contraseñas deben ser iguales",
             })}
           />
           {errors.password_confirmation && (
