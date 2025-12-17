@@ -1,20 +1,25 @@
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import ErrorsMessages from "../components/ErrorsMessages";
+import type { ProfileForm, User } from "../types";
 
 export default function ProfileView() {
+  const queryClient = useQueryClient();
+  const data: User = queryClient.getQueryData(["user"])!;
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<ProfileForm>({
     defaultValues: {
-      handle: "",
-      description: "",
+      handle: data.handle,
+      description: data.description,
     },
   });
 
-  const handleProfileForm = () => {
-    console.log("Desde handelProfileForm");
+  const handleProfileForm = (formData: ProfileForm) => {
+    console.log(formData);
   };
 
   return (
@@ -49,7 +54,9 @@ export default function ProfileView() {
             required: "La descripción es obligatoria",
           })}
         />
-        {errors.description && <ErrorsMessages>{errors.description.message}</ErrorsMessages>}
+        {errors.description && (
+          <ErrorsMessages>{errors.description.message}</ErrorsMessages>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-2">
